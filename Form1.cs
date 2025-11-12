@@ -115,26 +115,21 @@ namespace QuickTextTranporter
 
         private void CbConnectedMode_CheckedChanged(object? sender, EventArgs e)
         {
-            Console.WriteLine($"[DEBUG] CbConnectedMode_CheckedChanged - Checked: {cbConnectedMode.Checked}, AllowChange: {_allowConnectedModeChange}, IsConnected: {_networkService?.IsConnected}");
-
             // Allow programmatic changes (when connection is lost)
             if (!_allowConnectedModeChange)
             {
-                Console.WriteLine($"[DEBUG] Change not allowed, returning");
                 return;
             }
 
             // Prevent manual unchecking when connected
             if (!cbConnectedMode.Checked && _networkService?.IsConnected == true)
             {
-                Console.WriteLine($"[DEBUG] Preventing manual uncheck - still connected");
                 cbConnectedMode.Checked = true;
                 MessageBox.Show("Cannot disable Connected Mode while connected to a device.\nDisconnect first or wait for connection to be lost.", 
                     "Connected Mode", MessageBoxButtons.OK, MessageBoxIcon.Information);
                 return;
             }
             
-            Console.WriteLine($"[DEBUG] Updating UI");
             UpdateConnectedModeUI();
         }
 
@@ -607,8 +602,6 @@ namespace QuickTextTranporter
                 return;
             }
 
-            Console.WriteLine($"[DEBUG] OnConnectionLost called");
-
             tsTextStatus.Text = "Connection lost";
             _connectedDeviceIP = null;
             
@@ -616,7 +609,6 @@ namespace QuickTextTranporter
             _pingTimer.Stop();
             
             // Auto-disable Connected Mode - bypass the check since connection is lost
-            Console.WriteLine($"[DEBUG] Disabling Connected Mode (bypass check)");
             _allowConnectedModeChange = false;
             cbConnectedMode.Checked = false;
             _allowConnectedModeChange = true;
@@ -624,8 +616,6 @@ namespace QuickTextTranporter
             
             // Cancel any ongoing downloads
             _downloadCancellationTokenSource?.Cancel();
-            
-            Console.WriteLine($"[DEBUG] Connection cleanup complete");
         }
 
         private async void PingTimer_Tick(object? sender, EventArgs e)
@@ -651,8 +641,6 @@ namespace QuickTextTranporter
                 return;
             }
 
-            Console.WriteLine($"[DEBUG] Incoming connection accepted");
-
             // Someone connected TO this device - enable Connected Mode
             _allowConnectedModeChange = false;
             cbConnectedMode.Checked = true;
@@ -663,8 +651,6 @@ namespace QuickTextTranporter
             _pingTimer.Start();
             
             tsTextStatus.Text = "Device connected to you";
-            
-            Console.WriteLine($"[DEBUG] Connected Mode enabled for incoming connection");
         }
 
         private void ConnectionCheckTimer_Tick(object? sender, EventArgs e)

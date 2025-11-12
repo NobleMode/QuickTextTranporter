@@ -410,25 +410,21 @@ namespace QuickTextTranporter
         {
             try
             {
-                Console.WriteLine($"[DEBUG] HandleFileData called, content length: {content.Length}");
                 var fileData = JsonSerializer.Deserialize<FileTransferData>(content);
                 if (fileData != null)
                 {
-                    Console.WriteLine($"[DEBUG] File data deserialized: {fileData.FileName}, data length: {fileData.Data?.Length ?? 0}");
                     var bytes = Convert.FromBase64String(fileData.Data ?? "");
-                    Console.WriteLine($"[DEBUG] Decoded bytes: {bytes.Length}");
                     
                     FileDataReceived?.Invoke(this, new FileDataReceivedEventArgs 
                     { 
                         FileName = fileData.FileName ?? "",
                         Data = bytes
                     });
-                    Console.WriteLine($"[DEBUG] FileDataReceived event invoked");
                 }
             }
-            catch (Exception ex)
+            catch (Exception)
             {
-                Console.WriteLine($"[DEBUG] Error in HandleFileData: {ex.Message}");
+                // Silently handle file data errors
             }
         }
 
@@ -591,9 +587,7 @@ namespace QuickTextTranporter
 
             try
             {
-                Console.WriteLine($"[DEBUG] SendFileAsync: Reading file {filePath}");
                 var bytes = await File.ReadAllBytesAsync(filePath);
-                Console.WriteLine($"[DEBUG] SendFileAsync: Read {bytes.Length} bytes");
                 
                 var fileData = new FileTransferData
                 {
@@ -607,13 +601,11 @@ namespace QuickTextTranporter
                     Content = JsonSerializer.Serialize(fileData)
                 };
 
-                Console.WriteLine($"[DEBUG] SendFileAsync: Sending message, content length: {message.Content.Length}");
                 await SendMessageAsync(message);
-                Console.WriteLine($"[DEBUG] SendFileAsync: Message sent");
             }
-            catch (Exception ex)
+            catch (Exception)
             {
-                Console.WriteLine($"[DEBUG] SendFileAsync error: {ex.Message}");
+                // Silently handle file send errors
             }
         }
 

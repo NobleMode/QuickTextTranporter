@@ -1,33 +1,15 @@
 using System.Diagnostics;
-using System.Runtime.InteropServices;
 
 namespace QuickTextTranporter
 {
     internal static class Program
     {
-        [DllImport("kernel32.dll", SetLastError = true)]
-        [return: MarshalAs(UnmanagedType.Bool)]
-        static extern bool AllocConsole();
-
-        [DllImport("kernel32.dll")]
-        static extern IntPtr GetConsoleWindow();
-
         /// <summary>
         ///  The main entry point for the application.
         /// </summary>
         [STAThread]
         static void Main()
         {
-            // Show console for debug output
-            if (GetConsoleWindow() == IntPtr.Zero)
-            {
-                AllocConsole();
-            }
-            Console.WriteLine("=== QuickTextTransporter Debug Mode ===");
-            Console.WriteLine($"Started at: {DateTime.Now}");
-            Console.WriteLine($"Machine: {Environment.MachineName}");
-            Console.WriteLine("========================================\n");
-
             // Check if .NET 8.0 runtime is available
             if (!CheckDotNetRuntime())
             {
