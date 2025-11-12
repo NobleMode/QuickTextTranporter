@@ -3,23 +3,45 @@
 ## Setup (First Time)
 
 ### Step 1: Build and Run
+
+**For Development**:
 ```powershell
 cd "f:\Code\Desktop App\QuickTextTranporter"
 dotnet run
 ```
 
-Or build and run the executable:
+**For Distribution** - Choose one build option:
+
+1. **Small build** (requires .NET 8.0 Runtime):
 ```powershell
-dotnet build
-./bin/Debug/net8.0-windows/QuickTextTranporter.exe
+build-small-exe.bat
+# Output: bin\Release\net8.0-windows\win-x64\publish\
 ```
+
+2. **Single EXE build** (no runtime needed):
+```powershell
+build-exe.bat
+# Output: bin\Release\net8.0-windows\win-x64-bundled\publish\
+```
+
+3. **Loose files build** (no runtime needed, faster startup):
+```powershell
+build-loose-bundled.bat
+# Output: bin\Release\net8.0-windows\win-x64-loose-bundled\publish\
+```
+
+All builds include firewall setup scripts automatically.
 
 ### Step 2: Configure Windows Firewall
 
 When you first run the application, Windows may prompt you to allow network access. **Click "Allow access"** for both Private and Public networks.
 
-If you missed the prompt or need to configure manually:
+**Easy Setup** (Recommended):
+- Right-click `setup-firewall.bat` and select "Run as administrator"
+- This automatically configures both UDP and TCP ports
+- To remove later, run `remove-firewall.bat` as administrator
 
+**Manual Setup** (if needed):
 1. Press `Win + R`, type `wf.msc`, and press Enter
 2. Click "Inbound Rules" → "New Rule"
 3. Select "Port" → Next

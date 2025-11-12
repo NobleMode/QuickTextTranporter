@@ -84,11 +84,12 @@ The status bar at the bottom shows:
 
 ### Windows Firewall Configuration
 
-Use the included batch scripts for easy firewall setup:
+Use the included batch scripts for easy firewall setup (included in all published builds):
 
 **Option 1 - Automated Setup** (Recommended):
 - Run `setup-firewall.bat` as Administrator to automatically configure firewall rules
 - Run `remove-firewall.bat` as Administrator to remove the rules later
+- These files are automatically copied to all publish folders
 
 **Option 2 - Manual Setup**:
 1. Open **Windows Defender Firewall**
@@ -98,21 +99,37 @@ Use the included batch scripts for easy firewall setup:
 
 ## Building the Application
 
-Two build options are available:
+Three build options are available to suit different deployment needs:
 
-### Self-Contained Build (154MB)
-- Includes .NET 8.0 runtime
+### 1. Framework-Dependent Build (~0.2MB) - Smallest
+- **Requires .NET 8.0 Runtime** installed on target machine
+- Single EXE file
+- Fastest build time
+- **Run**: `build-small-exe.bat`
+- **Output**: `bin\Release\net8.0-windows\win-x64\publish\`
+- **Best for**: Distributing to users who already have .NET 8.0 installed
+
+### 2. Self-Contained Single File (~60-70MB)
+- **Includes .NET 8.0 runtime** bundled into a single EXE
 - No prerequisites needed on target machine
-- Run: `build-exe.bat`
-- Output: `bin\Release\net8.0-windows\win-x64\publish\`
+- Single portable EXE file
+- Slightly slower startup (unpacking required)
+- **Run**: `build-exe.bat`
+- **Output**: `bin\Release\net8.0-windows\win-x64-bundled\publish\`
+- **Best for**: Easy distribution - just copy one EXE file
 
-### Framework-Dependent Build (0.2MB)
-- Requires .NET 8.0 Runtime installed on target machine
-- Much smaller file size
-- Run: `build-small-exe.bat`
-- Output: `bin\Release\net8.0-windows\publish\`
+### 3. Self-Contained Loose Files (~60-70MB)
+- **Includes .NET 8.0 runtime** as separate DLL files
+- No prerequisites needed on target machine
+- Folder with multiple files
+- Faster startup than single file build
+- **Run**: `build-loose-bundled.bat`
+- **Output**: `bin\Release\net8.0-windows\win-x64-loose-bundled\publish\`
+- **Best for**: Best performance, distribute as a folder
 
-The application automatically checks for .NET 8.0 runtime on startup and shows an error if missing.
+**Note**: All build scripts automatically copy firewall management batch files (`setup-firewall.bat` and `remove-firewall.bat`) to the publish folder for easy deployment.
+
+The application automatically checks for .NET 8.0 runtime on startup and shows an error if missing (framework-dependent build only).
 
 ## Troubleshooting
 
