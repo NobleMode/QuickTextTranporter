@@ -7,7 +7,7 @@ echo Building bundled version with loose files...
 echo (Includes .NET Runtime - no single file packing)
 echo.
 
-dotnet publish -c Release -r win-x64 --self-contained true -p:PublishDir=bin\Release\net8.0-windows\win-x64-loose-bundled\
+dotnet publish -c Release -r win-x64 --self-contained true -p:PublishDir=bin\Release\net8.0-windows\win-x64-loose-bundled
 
 echo.
 echo Copying firewall batch files...

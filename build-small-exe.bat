@@ -7,13 +7,13 @@ echo Building framework-dependent executable...
 echo (Requires .NET 8.0 Runtime to be installed)
 echo.
 
-dotnet publish -c Release -r win-x64 --no-self-contained -p:PublishSingleFile=true -p:PublishDir=bin\Release\net8.0-windows\win-x64\
+dotnet publish -c Release -r win-x64 --no-self-contained -p:PublishSingleFile=true -p:PublishDir=bin\Release\net8.0-windows\win-x64-small
 
 echo.
 echo Copying firewall batch files...
 echo.
-copy /Y setup-firewall.bat bin\Release\net8.0-windows\win-x64\
-copy /Y remove-firewall.bat bin\Release\net8.0-windows\win-x64\
+copy /Y setup-firewall.bat bin\Release\net8.0-windows\win-x64-small\
+copy /Y remove-firewall.bat bin\Release\net8.0-windows\win-x64-small\
 
 echo.
 echo ========================================
@@ -21,7 +21,7 @@ echo Build Complete!
 echo ========================================
 echo.
 echo Your executable is located at:
-echo bin\Release\net8.0-windows\win-x64\publish\QuickTextTranporter.exe
+echo bin\Release\net8.0-windows\win-x64-small\QuickTextTranporter.exe
 echo.
 echo Firewall management files have been copied to the publish folder.
 echo.
