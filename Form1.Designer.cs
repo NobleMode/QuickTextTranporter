@@ -28,6 +28,7 @@
         /// </summary>
         private void InitializeComponent()
         {
+            System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(Form1));
             tbConnectedText = new TextBox();
             label1 = new Label();
             cbDevice = new ComboBox();
@@ -36,9 +37,9 @@
             btnRefreshCbDevice = new Button();
             btnQuickClear = new Button();
             statusStrip1 = new StatusStrip();
-            pbTransfer = new ToolStripProgressBar();
             tsTextStatus = new ToolStripStatusLabel();
             tsConnectedMode = new ToolStripStatusLabel();
+            toolStripStatusLabel1 = new ToolStripStatusLabel();
             label3 = new Label();
             label4 = new Label();
             btnClearYourFiles = new Button();
@@ -46,6 +47,11 @@
             lvConnectedFiles = new ListView();
             lvYourFiles = new ListView();
             cbConnectedMode = new CheckBox();
+            pbTransfer = new ProgressBar();
+            toolStripStatusLabel2 = new ToolStripStatusLabel();
+            ddFirewall = new ToolStripDropDownButton();
+            enableFirewallRulesToolStripMenuItem = new ToolStripMenuItem();
+            removeFileToolStripMenuItem = new ToolStripMenuItem();
             statusStrip1.SuspendLayout();
             SuspendLayout();
             // 
@@ -112,17 +118,12 @@
             // 
             // statusStrip1
             // 
-            statusStrip1.Items.AddRange(new ToolStripItem[] { pbTransfer, tsTextStatus, tsConnectedMode });
+            statusStrip1.Items.AddRange(new ToolStripItem[] { tsTextStatus, toolStripStatusLabel2, tsConnectedMode, toolStripStatusLabel1, ddFirewall });
             statusStrip1.Location = new Point(0, 369);
             statusStrip1.Name = "statusStrip1";
             statusStrip1.Size = new Size(544, 22);
             statusStrip1.TabIndex = 7;
             statusStrip1.Text = "statusStrip1";
-            // 
-            // pbTransfer
-            // 
-            pbTransfer.Name = "pbTransfer";
-            pbTransfer.Size = new Size(100, 16);
             // 
             // tsTextStatus
             // 
@@ -135,6 +136,12 @@
             tsConnectedMode.Name = "tsConnectedMode";
             tsConnectedMode.Size = new Size(127, 17);
             tsConnectedMode.Text = "Connected Mode - Off";
+            // 
+            // toolStripStatusLabel1
+            // 
+            toolStripStatusLabel1.Name = "toolStripStatusLabel1";
+            toolStripStatusLabel1.Size = new Size(10, 17);
+            toolStripStatusLabel1.Text = "|";
             // 
             // label3
             // 
@@ -199,11 +206,47 @@
             cbConnectedMode.Text = "Connected To Mode";
             cbConnectedMode.UseVisualStyleBackColor = true;
             // 
+            // pbTransfer
+            // 
+            pbTransfer.Location = new Point(139, 242);
+            pbTransfer.Name = "pbTransfer";
+            pbTransfer.Size = new Size(125, 19);
+            pbTransfer.TabIndex = 15;
+            // 
+            // toolStripStatusLabel2
+            // 
+            toolStripStatusLabel2.Name = "toolStripStatusLabel2";
+            toolStripStatusLabel2.Size = new Size(10, 17);
+            toolStripStatusLabel2.Text = "|";
+            // 
+            // ddFirewall
+            // 
+            ddFirewall.DisplayStyle = ToolStripItemDisplayStyle.Text;
+            ddFirewall.DropDownItems.AddRange(new ToolStripItem[] { enableFirewallRulesToolStripMenuItem, removeFileToolStripMenuItem });
+            ddFirewall.Image = (Image)resources.GetObject("ddFirewall.Image");
+            ddFirewall.ImageTransparentColor = Color.Magenta;
+            ddFirewall.Name = "ddFirewall";
+            ddFirewall.Size = new Size(60, 20);
+            ddFirewall.Text = "Firewall";
+            // 
+            // enableFirewallRulesToolStripMenuItem
+            // 
+            enableFirewallRulesToolStripMenuItem.Name = "enableFirewallRulesToolStripMenuItem";
+            enableFirewallRulesToolStripMenuItem.Size = new Size(190, 22);
+            enableFirewallRulesToolStripMenuItem.Text = "Add Firewall Rules";
+            // 
+            // removeFileToolStripMenuItem
+            // 
+            removeFileToolStripMenuItem.Name = "removeFileToolStripMenuItem";
+            removeFileToolStripMenuItem.Size = new Size(190, 22);
+            removeFileToolStripMenuItem.Text = "Remove Firewall Rules";
+            // 
             // Form1
             // 
             AutoScaleDimensions = new SizeF(7F, 15F);
             AutoScaleMode = AutoScaleMode.Font;
             ClientSize = new Size(544, 391);
+            Controls.Add(pbTransfer);
             Controls.Add(cbConnectedMode);
             Controls.Add(lvYourFiles);
             Controls.Add(lvConnectedFiles);
@@ -247,6 +290,11 @@
         private ListView lvYourFiles;
         private CheckBox cbConnectedMode;
         private ToolStripStatusLabel tsConnectedMode;
-        private ToolStripProgressBar pbTransfer;
+        private ProgressBar pbTransfer;
+        private ToolStripStatusLabel toolStripStatusLabel1;
+        private ToolStripStatusLabel toolStripStatusLabel2;
+        private ToolStripDropDownButton ddFirewall;
+        private ToolStripMenuItem enableFirewallRulesToolStripMenuItem;
+        private ToolStripMenuItem removeFileToolStripMenuItem;
     }
 }

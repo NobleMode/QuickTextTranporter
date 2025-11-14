@@ -93,6 +93,10 @@ namespace QuickTextTranporter
             lvYourFiles.DoubleClick += LvYourFiles_DoubleClick;
             lvConnectedFiles.DoubleClick += LvConnectedFiles_DoubleClick;
 
+            // Menu strip events
+            enableFirewallRulesToolStripMenuItem.Click += EnableFirewallRulesToolStripMenuItem_Click;
+            removeFileToolStripMenuItem.Click += RemoveFirewallRulesToolStripMenuItem_Click;
+
             // Form load event
             this.Load += Form1_Load;
             this.FormClosing += Form1_FormClosing;
@@ -125,11 +129,11 @@ namespace QuickTextTranporter
             if (!cbConnectedMode.Checked && _networkService?.IsConnected == true)
             {
                 cbConnectedMode.Checked = true;
-                MessageBox.Show("Cannot disable Connected Mode while connected to a device.\nDisconnect first or wait for connection to be lost.", 
+                MessageBox.Show("Cannot disable Connected Mode while connected to a device.\nDisconnect first or wait for connection to be lost.",
                     "Connected Mode", MessageBoxButtons.OK, MessageBoxIcon.Information);
                 return;
             }
-            
+
             UpdateConnectedModeUI();
         }
 
@@ -221,7 +225,7 @@ namespace QuickTextTranporter
             if (ipDialog.ShowDialog() == DialogResult.OK)
             {
                 var ipAddress = textBox.Text.Trim();
-                
+
                 if (!string.IsNullOrEmpty(ipAddress))
                 {
                     // Clear current data
@@ -244,7 +248,7 @@ namespace QuickTextTranporter
                             DeviceName = ipAddress,
                             IPAddress = ipAddress
                         };
-                        
+
                         cbDevice.Items.Add(device);
                         cbDevice.SelectedItem = device;
 
@@ -307,20 +311,20 @@ namespace QuickTextTranporter
 
                 // Connect to the device
                 tsTextStatus.Text = $"Connecting to {device.DeviceName}...";
-                
+
                 bool connected = await _networkService.ConnectToDeviceAsync(device.IPAddress);
 
                 if (connected)
                 {
                     _connectedDeviceIP = device.IPAddress;
                     tsTextStatus.Text = $"Connected to {device.DeviceName}";
-                    
+
                     // DON'T enable Connected Mode - we are the connector, not the receiver
                     // Connected Mode only enables on the device being connected TO
-                    
+
                     // Start ping timer
                     _pingTimer.Start();
-                    
+
                     // Send our current text and file list
                     await SendYourTextToDevice();
                     await SendYourFileListToDevice();
@@ -372,7 +376,7 @@ namespace QuickTextTranporter
                 foreach (var filePath in openFileDialog.FileNames)
                 {
                     var fileInfo = new System.IO.FileInfo(filePath);
-                    
+
                     // Check if file already exists
                     if (!_yourFiles.Any(f => f.FilePath == filePath))
                     {
@@ -451,8 +455,8 @@ namespace QuickTextTranporter
                         try
                         {
                             // Request the file from connected device
-                            await _networkService.RequestFileAsync(file.FileName ?? "", saveFileDialog.FileName, 
-                                new Progress<int>(percent => 
+                            await _networkService.RequestFileAsync(file.FileName ?? "", saveFileDialog.FileName,
+                                new Progress<int>(percent =>
                                 {
                                     if (InvokeRequired)
                                     {
@@ -462,20 +466,20 @@ namespace QuickTextTranporter
                                     {
                                         pbTransfer.Value = percent;
                                     }
-                                }), 
+                                }),
                                 _downloadCancellationTokenSource.Token);
 
-                            MessageBox.Show($"File '{file.FileName}' downloaded successfully!", 
+                            MessageBox.Show($"File '{file.FileName}' downloaded successfully!",
                                 "Download Complete", MessageBoxButtons.OK, MessageBoxIcon.Information);
                         }
                         catch (OperationCanceledException)
                         {
-                            MessageBox.Show("Download cancelled.", 
+                            MessageBox.Show("Download cancelled.",
                                 "Cancelled", MessageBoxButtons.OK, MessageBoxIcon.Information);
                         }
                         catch (Exception ex)
                         {
-                            MessageBox.Show($"Download failed: {ex.Message}", 
+                            MessageBox.Show($"Download failed: {ex.Message}",
                                 "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
                         }
                         finally
@@ -547,7 +551,7 @@ namespace QuickTextTranporter
             {
                 // Format: File (rd - dir)
                 var item = new ListViewItem(file.FileName);
-                
+
                 // Extract directory from file path
                 string directory = "";
                 if (!string.IsNullOrEmpty(file.FilePath))
@@ -562,7 +566,7 @@ namespace QuickTextTranporter
                         directory = file.FilePath ?? "";
                     }
                 }
-                
+
                 item.SubItems.Add($"(rd - {directory})");
                 item.Tag = file;
                 lvConnectedFiles.Items.Add(item);
@@ -573,7 +577,7 @@ namespace QuickTextTranporter
         {
             // Find the requested file in our list
             var file = _yourFiles.FirstOrDefault(f => f.FileName == e.FileName);
-            
+
             if (file != null && !string.IsNullOrEmpty(file.FilePath) && File.Exists(file.FilePath))
             {
                 try
@@ -604,16 +608,16 @@ namespace QuickTextTranporter
 
             tsTextStatus.Text = "Connection lost";
             _connectedDeviceIP = null;
-            
+
             // Stop ping timer
             _pingTimer.Stop();
-            
+
             // Auto-disable Connected Mode - bypass the check since connection is lost
             _allowConnectedModeChange = false;
             cbConnectedMode.Checked = false;
             _allowConnectedModeChange = true;
             UpdateConnectedModeUI();
-            
+
             // Cancel any ongoing downloads
             _downloadCancellationTokenSource?.Cancel();
         }
@@ -646,10 +650,10 @@ namespace QuickTextTranporter
             cbConnectedMode.Checked = true;
             _allowConnectedModeChange = true;
             UpdateConnectedModeUI();
-            
+
             // Start ping timer
             _pingTimer.Start();
-            
+
             tsTextStatus.Text = "Device connected to you";
         }
 
@@ -678,6 +682,182 @@ namespace QuickTextTranporter
                 {
                     tsTextStatus.Text = "No connected device";
                 }
+            }
+        }
+
+        private void EnableFirewallRulesToolStripMenuItem_Click(object? sender, EventArgs e)
+        {
+            try
+            {
+                // Check if running as administrator
+                var identity = System.Security.Principal.WindowsIdentity.GetCurrent();
+                var principal = new System.Security.Principal.WindowsPrincipal(identity);
+                bool isAdmin = principal.IsInRole(System.Security.Principal.WindowsBuiltInRole.Administrator);
+
+                if (!isAdmin)
+                {
+                    MessageBox.Show(
+                        "Administrator privileges are required to add firewall rules.\n\n" +
+                        "Please restart the application as Administrator and try again.",
+                        "Administrator Required",
+                        MessageBoxButtons.OK,
+                        MessageBoxIcon.Warning);
+                    return;
+                }
+
+                // Add UDP rule for device discovery (port 45678)
+                var udpProcess = new Process
+                {
+                    StartInfo = new ProcessStartInfo
+                    {
+                        FileName = "netsh",
+                        Arguments = "advfirewall firewall add rule name=\"QuickTextTransporter UDP\" dir=in action=allow protocol=UDP localport=45678",
+                        UseShellExecute = false,
+                        CreateNoWindow = true,
+                        RedirectStandardOutput = true,
+                        RedirectStandardError = true
+                    }
+                };
+                udpProcess.Start();
+                udpProcess.WaitForExit();
+
+                // Add TCP rule for communication (port 45679)
+                var tcpProcess = new Process
+                {
+                    StartInfo = new ProcessStartInfo
+                    {
+                        FileName = "netsh",
+                        Arguments = "advfirewall firewall add rule name=\"QuickTextTransporter TCP\" dir=in action=allow protocol=TCP localport=45679",
+                        UseShellExecute = false,
+                        CreateNoWindow = true,
+                        RedirectStandardOutput = true,
+                        RedirectStandardError = true
+                    }
+                };
+                tcpProcess.Start();
+                tcpProcess.WaitForExit();
+
+                if (udpProcess.ExitCode == 0 && tcpProcess.ExitCode == 0)
+                {
+                    MessageBox.Show(
+                        "✅ Firewall Rules Added Successfully!\n\n" +
+                        "The following rules have been configured:\n" +
+                        "• UDP Port 45678 (Device Discovery)\n" +
+                        "• TCP Port 45679 (Communication)\n\n" +
+                        "QuickTextTransporter can now communicate on your network.",
+                        "Firewall Configuration Changed",
+                        MessageBoxButtons.OK,
+                        MessageBoxIcon.Information);
+                }
+                else
+                {
+                    MessageBox.Show(
+                        "❌ Failed to Add Firewall Rules\n\n" +
+                        "Possible reasons:\n" +
+                        "• Rules may already exist\n" +
+                        "• Insufficient permissions\n" +
+                        "• Firewall service unavailable\n\n" +
+                        "Please check Windows Firewall settings manually.",
+                        "Firewall Configuration Failed",
+                        MessageBoxButtons.OK,
+                        MessageBoxIcon.Error);
+                }
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show(
+                    $"❌ Error Adding Firewall Rules\n\n" +
+                    $"Error Details:\n{ex.Message}",
+                    "Firewall Configuration Error",
+                    MessageBoxButtons.OK,
+                    MessageBoxIcon.Error);
+            }
+        }
+
+        private void RemoveFirewallRulesToolStripMenuItem_Click(object? sender, EventArgs e)
+        {
+            try
+            {
+                // Check if running as administrator
+                var identity = System.Security.Principal.WindowsIdentity.GetCurrent();
+                var principal = new System.Security.Principal.WindowsPrincipal(identity);
+                bool isAdmin = principal.IsInRole(System.Security.Principal.WindowsBuiltInRole.Administrator);
+
+                if (!isAdmin)
+                {
+                    MessageBox.Show(
+                        "Administrator privileges are required to remove firewall rules.\n\n" +
+                        "Please restart the application as Administrator and try again.",
+                        "Administrator Required",
+                        MessageBoxButtons.OK,
+                        MessageBoxIcon.Warning);
+                    return;
+                }
+
+                var result = MessageBox.Show(
+                    "⚠️ Remove Firewall Rules?\n\n" +
+                    "This will remove the following rules:\n" +
+                    "• QuickTextTransporter UDP (Port 45678)\n" +
+                    "• QuickTextTransporter TCP (Port 45679)\n\n" +
+                    "The application may not work properly without these rules.\n\n" +
+                    "Do you want to continue?",
+                    "Confirm Firewall Configuration Change",
+                    MessageBoxButtons.YesNo,
+                    MessageBoxIcon.Question);
+
+                if (result != DialogResult.Yes)
+                    return;
+
+                // Remove UDP rule
+                var udpProcess = new Process
+                {
+                    StartInfo = new ProcessStartInfo
+                    {
+                        FileName = "netsh",
+                        Arguments = "advfirewall firewall delete rule name=\"QuickTextTransporter UDP\"",
+                        UseShellExecute = false,
+                        CreateNoWindow = true,
+                        RedirectStandardOutput = true,
+                        RedirectStandardError = true
+                    }
+                };
+                udpProcess.Start();
+                udpProcess.WaitForExit();
+
+                // Remove TCP rule
+                var tcpProcess = new Process
+                {
+                    StartInfo = new ProcessStartInfo
+                    {
+                        FileName = "netsh",
+                        Arguments = "advfirewall firewall delete rule name=\"QuickTextTransporter TCP\"",
+                        UseShellExecute = false,
+                        CreateNoWindow = true,
+                        RedirectStandardOutput = true,
+                        RedirectStandardError = true
+                    }
+                };
+                tcpProcess.Start();
+                tcpProcess.WaitForExit();
+
+                MessageBox.Show(
+                    "✅ Firewall Rules Removed Successfully!\n\n" +
+                    "The following rules have been deleted:\n" +
+                    "• QuickTextTransporter UDP (Port 45678)\n" +
+                    "• QuickTextTransporter TCP (Port 45679)\n\n" +
+                    "Note: You may need to add them back to use the application.",
+                    "Firewall Configuration Changed",
+                    MessageBoxButtons.OK,
+                    MessageBoxIcon.Information);
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show(
+                    $"❌ Error Removing Firewall Rules\n\n" +
+                    $"Error Details:\n{ex.Message}",
+                    "Firewall Configuration Error",
+                    MessageBoxButtons.OK,
+                    MessageBoxIcon.Error);
             }
         }
     }

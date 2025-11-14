@@ -7,7 +7,7 @@ echo Building framework-dependent executable...
 echo (Requires .NET 8.0 Runtime to be installed)
 echo.
 
-dotnet publish -c Release -r win-x64 --no-self-contained -p:PublishSingleFile=true -p:PublishDir=bin\Release\net8.0-windows\win-x64-small
+dotnet publish -c Release -r win-x64 --no-self-contained -p:PublishSingleFile=true -p:DebugType=None -p:DebugSymbols=false -p:PublishDir=bin\Release\net8.0-windows\win-x64-small
 
 echo.
 echo Copying firewall batch files...
