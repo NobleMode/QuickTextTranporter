@@ -13,6 +13,7 @@ echo Copying firewall batch files...
 echo.
 copy /Y setup-firewall.bat bin\Release\net8.0-windows\win-x64-bundled\
 copy /Y remove-firewall.bat bin\Release\net8.0-windows\win-x64-bundled\
+copy /Y CONNECTIVITY_GUIDE.md bin\Release\net8.0-windows\win-x64-bundled\
 
 echo.
 echo ========================================

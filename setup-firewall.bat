@@ -20,6 +20,11 @@ netsh advfirewall firewall add rule name="QuickTextTransporter - Communication (
 netsh advfirewall firewall add rule name="QuickTextTransporter - Communication (TCP) Out" dir=out action=allow protocol=TCP localport=45679
 
 echo.
+echo Adding TCP rule for Web Server (port 45680)...
+netsh advfirewall firewall add rule name="QuickTextTransporter - Web Server (TCP)" dir=in action=allow protocol=TCP localport=45680
+netsh advfirewall firewall add rule name="QuickTextTransporter - Web Server (TCP) Out" dir=out action=allow protocol=TCP localport=45680
+
+echo.
 echo ========================================
 echo Firewall rules added successfully!
 echo ========================================

@@ -15,7 +15,10 @@ namespace QuickTextTranporter
         // Store client state by IP
         private readonly ConcurrentDictionary<string, WebClientState> _clients = new();
 
+        private System.Timers.Timer? _cleanupTimer;
+
         public event EventHandler<string>? ClientConnected;
+        public event EventHandler<string>? ClientDisconnected;
         public event EventHandler<string>? ClientUpdated; // Text or activity update
         public event EventHandler<(string Ip, string Text)>? TextReceived;
 
@@ -49,6 +52,11 @@ namespace QuickTextTranporter
                 _isRunning = true;
                 _listenerThread = new Thread(ListenLoop);
                 _listenerThread.Start();
+
+                _cleanupTimer = new System.Timers.Timer(5000); // Check every 5 seconds
+                _cleanupTimer.Elapsed += CleanupInactiveClients;
+                _cleanupTimer.AutoReset = true;
+                _cleanupTimer.Start();
             }
             catch (Exception)
             {
@@ -60,12 +68,34 @@ namespace QuickTextTranporter
         public void Stop()
         {
             _isRunning = false;
+            _cleanupTimer?.Stop();
+            _cleanupTimer?.Dispose();
+            _cleanupTimer = null;
+
             try
             {
                 _listener?.Stop();
             }
             catch { /* Ignore errors on stop */ }
             _listener = null;
+            _clients.Clear(); // Clear clients on stop
+        }
+
+        private void CleanupInactiveClients(object? sender, System.Timers.ElapsedEventArgs e)
+        {
+            var now = DateTime.Now;
+            var timeout = TimeSpan.FromSeconds(15); // Disconnect after 15 seconds of inactivity
+
+            foreach (var client in _clients)
+            {
+                if (now - client.Value.LastSeen > timeout)
+                {
+                    if (_clients.TryRemove(client.Key, out _))
+                    {
+                        ClientDisconnected?.Invoke(this, client.Key);
+                    }
+                }
+            }
         }
 
         private void ListenLoop()

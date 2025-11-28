@@ -1034,6 +1034,13 @@ namespace QuickTextTranporter
                             CbWebDevice_SelectedIndexChanged(null, EventArgs.Empty);
                         }
                     }));
+                    _webServer.ClientDisconnected += (s, ip) => Invoke(new Action(() =>
+                    {
+                        RefreshWebClients();
+                        // If the disconnected client was selected, clear the selection or select the next one
+                        // RefreshWebClients handles repopulating the list, so we just need to ensure the UI state is consistent.
+                        // If the list becomes empty, RefreshWebClients handles that too.
+                    }));
                 }
 
                 try

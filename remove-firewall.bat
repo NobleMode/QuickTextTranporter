@@ -20,6 +20,11 @@ netsh advfirewall firewall delete rule name="QuickTextTransporter - Communicatio
 netsh advfirewall firewall delete rule name="QuickTextTransporter - Communication (TCP) Out"
 
 echo.
+echo Removing TCP rule for Web Server (port 45680)...
+netsh advfirewall firewall delete rule name="QuickTextTransporter - Web Server (TCP)"
+netsh advfirewall firewall delete rule name="QuickTextTransporter - Web Server (TCP) Out"
+
+echo.
 echo ========================================
 echo Firewall rules removed successfully!
 echo ========================================
