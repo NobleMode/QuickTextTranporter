@@ -213,3 +213,5 @@ $RECYCLE.BIN/
 *.txt
 !README.txt
 !LICENSE.txt
+
+.fake

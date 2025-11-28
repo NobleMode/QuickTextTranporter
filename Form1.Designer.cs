@@ -38,8 +38,18 @@
             btnQuickClear = new Button();
             statusStrip1 = new StatusStrip();
             tsTextStatus = new ToolStripStatusLabel();
+            toolStripStatusLabel2 = new ToolStripStatusLabel();
             tsConnectedMode = new ToolStripStatusLabel();
+            toolStripStatusLabel3 = new ToolStripStatusLabel();
+            ddFirewall = new ToolStripDropDownButton();
+            enableFirewallRulesToolStripMenuItem = new ToolStripMenuItem();
+            removeFileToolStripMenuItem = new ToolStripMenuItem();
             toolStripStatusLabel1 = new ToolStripStatusLabel();
+            tsWebServerCount = new ToolStripStatusLabel();
+            toolStripStatusLabel5 = new ToolStripStatusLabel();
+            ddWebServer = new ToolStripDropDownButton();
+            toolStripMenuItem1 = new ToolStripMenuItem();
+            toolStripMenuItem2 = new ToolStripMenuItem();
             label3 = new Label();
             label4 = new Label();
             btnClearYourFiles = new Button();
@@ -48,10 +58,15 @@
             lvYourFiles = new ListView();
             cbConnectedMode = new CheckBox();
             pbTransfer = new ProgressBar();
-            toolStripStatusLabel2 = new ToolStripStatusLabel();
-            ddFirewall = new ToolStripDropDownButton();
-            enableFirewallRulesToolStripMenuItem = new ToolStripMenuItem();
-            removeFileToolStripMenuItem = new ToolStripMenuItem();
+            pbWebServer = new ProgressBar();
+            lvWebServer = new ListView();
+            label5 = new Label();
+            btnRefreshWS = new Button();
+            cbWebDevice = new ComboBox();
+            label6 = new Label();
+            tbWebServer = new TextBox();
+            openWebToolStripMenuItem = new ToolStripMenuItem();
+            copToolStripMenuItem = new ToolStripMenuItem();
             statusStrip1.SuspendLayout();
             SuspendLayout();
             // 
@@ -118,10 +133,10 @@
             // 
             // statusStrip1
             // 
-            statusStrip1.Items.AddRange(new ToolStripItem[] { tsTextStatus, toolStripStatusLabel2, tsConnectedMode, toolStripStatusLabel1, ddFirewall });
+            statusStrip1.Items.AddRange(new ToolStripItem[] { tsTextStatus, toolStripStatusLabel2, tsConnectedMode, toolStripStatusLabel3, ddFirewall, toolStripStatusLabel1, tsWebServerCount, toolStripStatusLabel5, ddWebServer });
             statusStrip1.Location = new Point(0, 369);
             statusStrip1.Name = "statusStrip1";
-            statusStrip1.Size = new Size(544, 22);
+            statusStrip1.Size = new Size(814, 22);
             statusStrip1.TabIndex = 7;
             statusStrip1.Text = "statusStrip1";
             // 
@@ -131,17 +146,85 @@
             tsTextStatus.Size = new Size(122, 17);
             tsTextStatus.Text = "No Connected Device";
             // 
+            // toolStripStatusLabel2
+            // 
+            toolStripStatusLabel2.Name = "toolStripStatusLabel2";
+            toolStripStatusLabel2.Size = new Size(10, 17);
+            toolStripStatusLabel2.Text = "|";
+            // 
             // tsConnectedMode
             // 
             tsConnectedMode.Name = "tsConnectedMode";
             tsConnectedMode.Size = new Size(127, 17);
             tsConnectedMode.Text = "Connected Mode - Off";
             // 
+            // toolStripStatusLabel3
+            // 
+            toolStripStatusLabel3.Name = "toolStripStatusLabel3";
+            toolStripStatusLabel3.Size = new Size(10, 17);
+            toolStripStatusLabel3.Text = "|";
+            // 
+            // ddFirewall
+            // 
+            ddFirewall.DisplayStyle = ToolStripItemDisplayStyle.Text;
+            ddFirewall.DropDownItems.AddRange(new ToolStripItem[] { enableFirewallRulesToolStripMenuItem, removeFileToolStripMenuItem });
+            ddFirewall.Image = (Image)resources.GetObject("ddFirewall.Image");
+            ddFirewall.ImageTransparentColor = Color.Magenta;
+            ddFirewall.Name = "ddFirewall";
+            ddFirewall.Size = new Size(113, 20);
+            ddFirewall.Text = "Firewall - Enabled";
+            // 
+            // enableFirewallRulesToolStripMenuItem
+            // 
+            enableFirewallRulesToolStripMenuItem.Name = "enableFirewallRulesToolStripMenuItem";
+            enableFirewallRulesToolStripMenuItem.Size = new Size(191, 22);
+            enableFirewallRulesToolStripMenuItem.Text = "Add Firewall Rules";
+            // 
+            // removeFileToolStripMenuItem
+            // 
+            removeFileToolStripMenuItem.Name = "removeFileToolStripMenuItem";
+            removeFileToolStripMenuItem.Size = new Size(191, 22);
+            removeFileToolStripMenuItem.Text = "Remove Firewall Rules";
+            // 
             // toolStripStatusLabel1
             // 
             toolStripStatusLabel1.Name = "toolStripStatusLabel1";
             toolStripStatusLabel1.Size = new Size(10, 17);
             toolStripStatusLabel1.Text = "|";
+            // 
+            // tsWebServerCount
+            // 
+            tsWebServerCount.Name = "tsWebServerCount";
+            tsWebServerCount.Size = new Size(126, 17);
+            tsWebServerCount.Text = "Web Server - 0 Devices";
+            // 
+            // toolStripStatusLabel5
+            // 
+            toolStripStatusLabel5.Name = "toolStripStatusLabel5";
+            toolStripStatusLabel5.Size = new Size(10, 17);
+            toolStripStatusLabel5.Text = "|";
+            // 
+            // ddWebServer
+            // 
+            ddWebServer.DisplayStyle = ToolStripItemDisplayStyle.Text;
+            ddWebServer.DropDownItems.AddRange(new ToolStripItem[] { toolStripMenuItem1, toolStripMenuItem2, copToolStripMenuItem, openWebToolStripMenuItem });
+            ddWebServer.Image = (Image)resources.GetObject("ddWebServer.Image");
+            ddWebServer.ImageTransparentColor = Color.Magenta;
+            ddWebServer.Name = "ddWebServer";
+            ddWebServer.Size = new Size(132, 20);
+            ddWebServer.Text = "Web Server - Enabled";
+            // 
+            // toolStripMenuItem1
+            // 
+            toolStripMenuItem1.Name = "toolStripMenuItem1";
+            toolStripMenuItem1.Size = new Size(180, 22);
+            toolStripMenuItem1.Text = "Enable Web Server";
+            // 
+            // toolStripMenuItem2
+            // 
+            toolStripMenuItem2.Name = "toolStripMenuItem2";
+            toolStripMenuItem2.Size = new Size(180, 22);
+            toolStripMenuItem2.Text = "Disable Web Server";
             // 
             // label3
             // 
@@ -199,7 +282,7 @@
             // cbConnectedMode
             // 
             cbConnectedMode.AutoSize = true;
-            cbConnectedMode.Location = new Point(398, 12);
+            cbConnectedMode.Location = new Point(280, 12);
             cbConnectedMode.Name = "cbConnectedMode";
             cbConnectedMode.Size = new Size(134, 19);
             cbConnectedMode.TabIndex = 14;
@@ -213,39 +296,90 @@
             pbTransfer.Size = new Size(125, 19);
             pbTransfer.TabIndex = 15;
             // 
-            // toolStripStatusLabel2
+            // pbWebServer
             // 
-            toolStripStatusLabel2.Name = "toolStripStatusLabel2";
-            toolStripStatusLabel2.Size = new Size(10, 17);
-            toolStripStatusLabel2.Text = "|";
+            pbWebServer.Location = new Point(677, 242);
+            pbWebServer.Name = "pbWebServer";
+            pbWebServer.Size = new Size(125, 19);
+            pbWebServer.TabIndex = 22;
             // 
-            // ddFirewall
+            // lvWebServer
             // 
-            ddFirewall.DisplayStyle = ToolStripItemDisplayStyle.Text;
-            ddFirewall.DropDownItems.AddRange(new ToolStripItem[] { enableFirewallRulesToolStripMenuItem, removeFileToolStripMenuItem });
-            ddFirewall.Image = (Image)resources.GetObject("ddFirewall.Image");
-            ddFirewall.ImageTransparentColor = Color.Magenta;
-            ddFirewall.Name = "ddFirewall";
-            ddFirewall.Size = new Size(60, 20);
-            ddFirewall.Text = "Firewall";
+            lvWebServer.Location = new Point(550, 264);
+            lvWebServer.MultiSelect = false;
+            lvWebServer.Name = "lvWebServer";
+            lvWebServer.Size = new Size(252, 96);
+            lvWebServer.TabIndex = 21;
+            lvWebServer.UseCompatibleStateImageBehavior = false;
             // 
-            // enableFirewallRulesToolStripMenuItem
+            // label5
             // 
-            enableFirewallRulesToolStripMenuItem.Name = "enableFirewallRulesToolStripMenuItem";
-            enableFirewallRulesToolStripMenuItem.Size = new Size(190, 22);
-            enableFirewallRulesToolStripMenuItem.Text = "Add Firewall Rules";
+            label5.AutoSize = true;
+            label5.Location = new Point(550, 246);
+            label5.Name = "label5";
+            label5.Size = new Size(118, 15);
+            label5.TabIndex = 20;
+            label5.Text = "Connected Web Files";
             // 
-            // removeFileToolStripMenuItem
+            // btnRefreshWS
             // 
-            removeFileToolStripMenuItem.Name = "removeFileToolStripMenuItem";
-            removeFileToolStripMenuItem.Size = new Size(190, 22);
-            removeFileToolStripMenuItem.Text = "Remove Firewall Rules";
+            btnRefreshWS.Location = new Point(677, 12);
+            btnRefreshWS.Name = "btnRefreshWS";
+            btnRefreshWS.Size = new Size(75, 23);
+            btnRefreshWS.TabIndex = 19;
+            btnRefreshWS.Text = "Refresh";
+            btnRefreshWS.UseVisualStyleBackColor = true;
+            // 
+            // cbWebDevice
+            // 
+            cbWebDevice.FormattingEnabled = true;
+            cbWebDevice.Location = new Point(550, 12);
+            cbWebDevice.Name = "cbWebDevice";
+            cbWebDevice.Size = new Size(121, 23);
+            cbWebDevice.TabIndex = 18;
+            // 
+            // label6
+            // 
+            label6.AutoSize = true;
+            label6.Location = new Point(550, 38);
+            label6.Name = "label6";
+            label6.Size = new Size(92, 15);
+            label6.TabIndex = 17;
+            label6.Text = "Connected Web";
+            // 
+            // tbWebServer
+            // 
+            tbWebServer.Location = new Point(550, 56);
+            tbWebServer.Multiline = true;
+            tbWebServer.Name = "tbWebServer";
+            tbWebServer.ReadOnly = true;
+            tbWebServer.Size = new Size(252, 183);
+            tbWebServer.TabIndex = 16;
+            // 
+            // openWebToolStripMenuItem
+            // 
+            openWebToolStripMenuItem.Name = "openWebToolStripMenuItem";
+            openWebToolStripMenuItem.Size = new Size(180, 22);
+            openWebToolStripMenuItem.Text = "Open Web";
+            // 
+            // copToolStripMenuItem
+            // 
+            copToolStripMenuItem.Name = "copToolStripMenuItem";
+            copToolStripMenuItem.Size = new Size(180, 22);
+            copToolStripMenuItem.Text = "Copy Web Link";
             // 
             // Form1
             // 
             AutoScaleDimensions = new SizeF(7F, 15F);
             AutoScaleMode = AutoScaleMode.Font;
-            ClientSize = new Size(544, 391);
+            ClientSize = new Size(814, 391);
+            Controls.Add(pbWebServer);
+            Controls.Add(lvWebServer);
+            Controls.Add(label5);
+            Controls.Add(btnRefreshWS);
+            Controls.Add(cbWebDevice);
+            Controls.Add(label6);
+            Controls.Add(tbWebServer);
             Controls.Add(pbTransfer);
             Controls.Add(cbConnectedMode);
             Controls.Add(lvYourFiles);
@@ -262,9 +396,9 @@
             Controls.Add(cbDevice);
             Controls.Add(label1);
             Controls.Add(tbConnectedText);
-            MinimumSize = new Size(560, 430);
+            MinimumSize = new Size(830, 430);
             Name = "Form1";
-            Text = "Form1";
+            Text = "Quick Text Tranporter";
             statusStrip1.ResumeLayout(false);
             statusStrip1.PerformLayout();
             ResumeLayout(false);
@@ -296,5 +430,20 @@
         private ToolStripDropDownButton ddFirewall;
         private ToolStripMenuItem enableFirewallRulesToolStripMenuItem;
         private ToolStripMenuItem removeFileToolStripMenuItem;
+        private ProgressBar pbWebServer;
+        private ListView lvWebServer;
+        private Label label5;
+        private Button btnRefreshWS;
+        private ComboBox cbWebDevice;
+        private Label label6;
+        private TextBox tbWebServer;
+        private ToolStripStatusLabel toolStripStatusLabel3;
+        private ToolStripDropDownButton ddWebServer;
+        private ToolStripMenuItem toolStripMenuItem1;
+        private ToolStripMenuItem toolStripMenuItem2;
+        private ToolStripStatusLabel tsWebServerCount;
+        private ToolStripStatusLabel toolStripStatusLabel5;
+        private ToolStripMenuItem openWebToolStripMenuItem;
+        private ToolStripMenuItem copToolStripMenuItem;
     }
 }

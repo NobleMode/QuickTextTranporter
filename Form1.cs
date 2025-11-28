@@ -1,4 +1,6 @@
 using System.Diagnostics;
+using System.Net;
+using System.IO;
 
 namespace QuickTextTranporter
 {
@@ -14,14 +16,23 @@ namespace QuickTextTranporter
         private bool _isUpdatingText = false;
         private CancellationTokenSource? _downloadCancellationTokenSource;
         private bool _allowConnectedModeChange = true;
+        private WebServer? _webServer;
+        private System.Windows.Forms.Timer _webServerUpdateTimer = null!;
 
         public Form1()
         {
             InitializeComponent();
             InitializeNetworkService();
-            InitializeTimers();
-            InitializeListViews();
+            InitializeTimers(); // Moved here
+            InitializeListViews(); // Moved here
+
+
             SetupEventHandlers();
+            CheckFirewallRules();
+
+            // Initial Web Server State
+            ddWebServer.Text = "Web Server - Stopped";
+            ddWebServer.ForeColor = Color.Red;
         }
 
         private void InitializeNetworkService()
@@ -54,7 +65,14 @@ namespace QuickTextTranporter
             // Ping timer - 5 seconds (2-way ping check)
             _pingTimer = new System.Windows.Forms.Timer();
             _pingTimer.Interval = 5000; // 5 seconds
-            _pingTimer.Tick += PingTimer_Tick;
+            _pingTimer.Tick += PingTimer_Tick; // Added missing event handler
+
+
+            // Web Server UI Update Timer
+            _webServerUpdateTimer = new System.Windows.Forms.Timer();
+            _webServerUpdateTimer.Interval = 1000;
+            _webServerUpdateTimer.Tick += WebServerUpdateTimer_Tick;
+            _webServerUpdateTimer.Start();
         }
 
         private void InitializeListViews()
@@ -68,8 +86,14 @@ namespace QuickTextTranporter
             // Setup Your Files ListView
             lvYourFiles.View = View.Details;
             lvYourFiles.FullRowSelect = true;
-            lvYourFiles.Columns.Add("File Name", 200);
+            lvYourFiles.Columns.Add("File Name", 200); // Added missing column
             lvYourFiles.Columns.Add("Path", 150);
+
+            // Setup Web Server ListView
+            lvWebServer.View = View.Details;
+            lvWebServer.FullRowSelect = true;
+            lvWebServer.Columns.Add("File Name", 200);
+            lvWebServer.Columns.Add("Size", 100);
         }
 
         private void SetupEventHandlers()
@@ -93,9 +117,17 @@ namespace QuickTextTranporter
             lvYourFiles.DoubleClick += LvYourFiles_DoubleClick;
             lvConnectedFiles.DoubleClick += LvConnectedFiles_DoubleClick;
 
-            // Menu strip events
-            enableFirewallRulesToolStripMenuItem.Click += EnableFirewallRulesToolStripMenuItem_Click;
+            // Context menu item for firewall rules
             removeFileToolStripMenuItem.Click += RemoveFirewallRulesToolStripMenuItem_Click;
+            enableFirewallRulesToolStripMenuItem.Click += EnableFirewallRulesToolStripMenuItem_Click; // Added missing event handler
+
+            // Web Server events
+            toolStripMenuItem1.Click += (s, e) => ToggleWebServer(true);
+            toolStripMenuItem2.Click += (s, e) => ToggleWebServer(false);
+            openWebToolStripMenuItem.Click += OpenWebToolStripMenuItem_Click;
+            copToolStripMenuItem.Click += CopToolStripMenuItem_Click;
+            btnRefreshWS.Click += BtnRefreshWS_Click;
+            cbWebDevice.SelectedIndexChanged += CbWebDevice_SelectedIndexChanged;
 
             // Form load event
             this.Load += Form1_Load;
@@ -114,7 +146,9 @@ namespace QuickTextTranporter
             _connectionCheckTimer?.Stop();
             _pingTimer?.Stop();
             _downloadCancellationTokenSource?.Cancel();
+            _webServerUpdateTimer?.Stop();
             _networkService?.Dispose();
+            _webServer?.Stop();
         }
 
         private void CbConnectedMode_CheckedChanged(object? sender, EventArgs e)
@@ -341,9 +375,14 @@ namespace QuickTextTranporter
         {
             if (_isUpdatingText) return;
 
-            // Reset the timer - this creates the 500ms debounce
-            _textUpdateTimer.Stop();
+            _textUpdateTimer.Stop(); // Stop to reset debounce
             _textUpdateTimer.Start();
+
+            // Update Web Server Host Text
+            if (_webServer != null && _webServer.IsRunning)
+            {
+                _webServer.HostText = tbYourText.Text;
+            }
         }
 
         private async void TextUpdateTimer_Tick(object? sender, EventArgs e)
@@ -407,6 +446,12 @@ namespace QuickTextTranporter
             if (_networkService.IsConnected)
             {
                 await _networkService.SendFileListAsync(_yourFiles);
+            }
+
+            // Update Web Server Files
+            if (_webServer != null && _webServer.IsRunning)
+            {
+                _webServer.HostFiles = _yourFiles;
             }
         }
 
@@ -772,6 +817,10 @@ namespace QuickTextTranporter
                     MessageBoxButtons.OK,
                     MessageBoxIcon.Error);
             }
+            finally
+            {
+                CheckFirewallRules();
+            }
         }
 
         private void RemoveFirewallRulesToolStripMenuItem_Click(object? sender, EventArgs e)
@@ -858,6 +907,346 @@ namespace QuickTextTranporter
                     "Firewall Configuration Error",
                     MessageBoxButtons.OK,
                     MessageBoxIcon.Error);
+            }
+            finally
+            {
+                CheckFirewallRules();
+            }
+        }
+
+        private void CheckFirewallRules()
+        {
+            Task.Run(() =>
+            {
+                try
+                {
+                    // Check UDP Rule
+                    var udpProcess = new Process
+                    {
+                        StartInfo = new ProcessStartInfo
+                        {
+                            FileName = "netsh",
+                            Arguments = "advfirewall firewall show rule name=\"QuickTextTransporter UDP\"",
+                            UseShellExecute = false,
+                            CreateNoWindow = true,
+                            RedirectStandardOutput = true
+                        }
+                    };
+                    udpProcess.Start();
+                    string udpOutput = udpProcess.StandardOutput.ReadToEnd();
+                    udpProcess.WaitForExit();
+
+                    // Check TCP Rule
+                    var tcpProcess = new Process
+                    {
+                        StartInfo = new ProcessStartInfo
+                        {
+                            FileName = "netsh",
+                            Arguments = "advfirewall firewall show rule name=\"QuickTextTransporter TCP\"",
+                            UseShellExecute = false,
+                            CreateNoWindow = true,
+                            RedirectStandardOutput = true
+                        }
+                    };
+                    tcpProcess.Start();
+                    string tcpOutput = tcpProcess.StandardOutput.ReadToEnd();
+                    tcpProcess.WaitForExit();
+
+                    bool rulesExist = !udpOutput.Contains("No rules match") && !tcpOutput.Contains("No rules match");
+
+                    if (InvokeRequired)
+                    {
+                        Invoke(new Action(() => UpdateFirewallStatus(rulesExist)));
+                    }
+                    else
+                    {
+                        UpdateFirewallStatus(rulesExist);
+                    }
+                }
+                catch
+                {
+                    // Ignore errors during check
+                }
+            });
+        }
+
+        private void UpdateFirewallStatus(bool enabled)
+        {
+            if (enabled)
+            {
+                ddFirewall.Text = "Firewall - Rules Active";
+                ddFirewall.ForeColor = Color.Green;
+                enableFirewallRulesToolStripMenuItem.Enabled = false;
+                removeFileToolStripMenuItem.Enabled = true;
+            }
+            else
+            {
+                ddFirewall.Text = "Firewall - Rules Missing";
+                ddFirewall.ForeColor = Color.Red;
+                enableFirewallRulesToolStripMenuItem.Enabled = true;
+                removeFileToolStripMenuItem.Enabled = false;
+            }
+        }
+
+        protected override void OnFormClosing(FormClosingEventArgs e)
+        {
+            _webServer?.Stop();
+            base.OnFormClosing(e);
+        }
+
+        private string GetLocalIpAddress()
+        {
+            var host = Dns.GetHostEntry(Dns.GetHostName());
+            foreach (var ip in host.AddressList)
+            {
+                if (ip.AddressFamily == System.Net.Sockets.AddressFamily.InterNetwork)
+                {
+                    return ip.ToString();
+                }
+            }
+            return "localhost";
+        }
+
+        private void ToggleWebServer(bool enable)
+        {
+            if (enable)
+            {
+                if (_webServer == null)
+                {
+                    _webServer = new WebServer();
+                    _webServer.HostText = tbYourText.Text;
+                    _webServer.HostFiles = _yourFiles;
+                    _webServer.ClientConnected += (s, ip) => Invoke(new Action(() => RefreshWebClients()));
+                    _webServer.TextReceived += (s, data) => Invoke(new Action(() =>
+                    {
+                        if (cbWebDevice.SelectedItem?.ToString() == data.Ip)
+                        {
+                            tbWebServer.Text = data.Text;
+                        }
+                    }));
+                    // Add FileReceived handler to refresh list when file is uploaded
+                    _webServer.ClientUpdated += (s, ip) => Invoke(new Action(() =>
+                    {
+                        if (cbWebDevice.SelectedItem?.ToString() == ip)
+                        {
+                            // Trigger a refresh of the file list for the selected client
+                            // We can reuse the selection change logic or just force a refresh
+                            CbWebDevice_SelectedIndexChanged(null, EventArgs.Empty);
+                        }
+                    }));
+                }
+
+                try
+                {
+                    _webServer.Start();
+                    string ip = GetLocalIpAddress();
+                    ddWebServer.Text = $"http://{ip}:45680";
+                    ddWebServer.ForeColor = Color.Green;
+                    toolStripMenuItem1.Enabled = false;
+                    toolStripMenuItem2.Enabled = true;
+
+                    // Force refresh to show empty state if needed
+                    RefreshWebClients();
+                }
+                catch (HttpListenerException ex) when (ex.ErrorCode == 5) // Access Denied
+                {
+                    var result = MessageBox.Show(
+                        "Web Server requires Administrator privileges to listen on port 45680.\n\n" +
+                        "Do you want to restart the application as Administrator?",
+                        "Administrator Required",
+                        MessageBoxButtons.YesNo,
+                        MessageBoxIcon.Warning);
+
+                    if (result == DialogResult.Yes)
+                    {
+                        var processInfo = new ProcessStartInfo(Application.ExecutablePath)
+                        {
+                            UseShellExecute = true,
+                            Verb = "runas"
+                        };
+                        try
+                        {
+                            Process.Start(processInfo);
+                            Application.Exit();
+                        }
+                        catch
+                        {
+                            // User cancelled UAC
+                        }
+                    }
+                }
+                catch (Exception ex)
+                {
+                    MessageBox.Show($"Failed to start Web Server: {ex.Message}", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                }
+            }
+            else
+            {
+                _webServer?.Stop();
+                ddWebServer.Text = "Web Server - Stopped";
+                ddWebServer.ForeColor = Color.Red;
+                toolStripMenuItem1.Enabled = true;
+                toolStripMenuItem2.Enabled = false;
+                tsWebServerCount.Text = "Web Server - 0 Devices";
+                cbWebDevice.Items.Clear();
+                cbWebDevice.Items.Add("No devices connected");
+                cbWebDevice.SelectedIndex = 0;
+                tbWebServer.Clear();
+                lvWebServer.Items.Clear();
+            }
+        }
+
+        private void BtnRefreshWS_Click(object? sender, EventArgs e)
+        {
+            RefreshWebClients();
+        }
+
+        private void RefreshWebClients()
+        {
+            if (_webServer == null || !_webServer.IsRunning) return;
+
+            var currentSelection = cbWebDevice.SelectedItem?.ToString();
+            cbWebDevice.Items.Clear();
+
+            foreach (var client in _webServer.ActiveClients)
+            {
+                cbWebDevice.Items.Add(client);
+            }
+
+            if (cbWebDevice.Items.Count == 0)
+            {
+                cbWebDevice.Items.Add("No devices connected");
+                cbWebDevice.SelectedIndex = 0;
+            }
+            else if (currentSelection != null && cbWebDevice.Items.Contains(currentSelection))
+            {
+                cbWebDevice.SelectedItem = currentSelection;
+            }
+            else
+            {
+                cbWebDevice.SelectedIndex = 0;
+            }
+
+            tsWebServerCount.Text = $"Web Server - {_webServer.ClientCount} Devices";
+        }
+
+        private void CbWebDevice_SelectedIndexChanged(object? sender, EventArgs e)
+        {
+            // Clear current view
+            tbWebServer.Clear();
+            lvWebServer.Items.Clear();
+
+            if (_webServer != null && cbWebDevice.SelectedItem is string ip)
+            {
+                var client = _webServer.GetClientState(ip);
+                if (client != null)
+                {
+                    tbWebServer.Text = client.Text;
+
+                    // Populate uploaded files
+                    foreach (var file in client.UploadedFiles)
+                    {
+                        var item = new ListViewItem(file.Name);
+                        item.SubItems.Add(FormatFileSize(file.Length));
+                        item.Tag = file.FullName; // Store full path for potential opening/interaction
+                        lvWebServer.Items.Add(item);
+                    }
+                }
+            }
+        }
+
+        private string FormatFileSize(long bytes)
+        {
+            string[] sizes = { "B", "KB", "MB", "GB", "TB" };
+            double len = bytes;
+            int order = 0;
+            while (len >= 1024 && order < sizes.Length - 1)
+            {
+                order++;
+                len = len / 1024;
+            }
+            return $"{len:0.##} {sizes[order]}";
+        }
+
+        private void WebServerUpdateTimer_Tick(object? sender, EventArgs e)
+        {
+            if (_webServer != null && _webServer.IsRunning)
+            {
+                tsWebServerCount.Text = $"Web Server - {_webServer.ClientCount} Devices";
+
+                // Also update text if the selected client updated
+                if (cbWebDevice.SelectedItem is string ip)
+                {
+                    var client = _webServer.GetClientState(ip);
+                    if (client != null)
+                    {
+                        if (tbWebServer.Text != client.Text && !tbWebServer.Focused)
+                        {
+                            tbWebServer.Text = client.Text;
+                        }
+
+                        // Check if file list needs update (simple count check for now)
+                        if (lvWebServer.Items.Count != client.UploadedFiles.Count)
+                        {
+                            // Refresh list
+                            lvWebServer.Items.Clear();
+                            foreach (var file in client.UploadedFiles)
+                            {
+                                var item = new ListViewItem(file.Name);
+                                item.SubItems.Add(FormatFileSize(file.Length));
+                                item.Tag = file.FullName;
+                                lvWebServer.Items.Add(item);
+                            }
+                        }
+                    }
+                }
+            }
+        }
+        private void OpenWebToolStripMenuItem_Click(object? sender, EventArgs e)
+        {
+            EnsureWebServerRunning(() =>
+            {
+                string ip = GetLocalIpAddress();
+                string url = $"http://{ip}:45680";
+                try
+                {
+                    Process.Start(new ProcessStartInfo(url) { UseShellExecute = true });
+                }
+                catch (Exception ex)
+                {
+                    MessageBox.Show($"Failed to open browser: {ex.Message}", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                }
+            });
+        }
+
+        private void CopToolStripMenuItem_Click(object? sender, EventArgs e)
+        {
+            EnsureWebServerRunning(() =>
+            {
+                string ip = GetLocalIpAddress();
+                string url = $"http://{ip}:45680";
+                Clipboard.SetText(url);
+                MessageBox.Show("Web Server link copied to clipboard!", "Success", MessageBoxButtons.OK, MessageBoxIcon.Information);
+            });
+        }
+
+        private void EnsureWebServerRunning(Action action)
+        {
+            if (_webServer != null && _webServer.IsRunning)
+            {
+                action();
+            }
+            else
+            {
+                var result = MessageBox.Show("Web Server is not running. Do you want to start it?", "Web Server", MessageBoxButtons.YesNo, MessageBoxIcon.Question);
+                if (result == DialogResult.Yes)
+                {
+                    ToggleWebServer(true);
+                    if (_webServer != null && _webServer.IsRunning)
+                    {
+                        action();
+                    }
+                }
             }
         }
     }
