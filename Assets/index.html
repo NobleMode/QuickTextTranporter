@@ -178,9 +178,28 @@
     <script>
       let lastHostText = "";
 
+      // --- Device ID Management ---
+      function getDeviceId() {
+        let deviceId = localStorage.getItem("device_id");
+        if (!deviceId) {
+          deviceId = crypto.randomUUID();
+          localStorage.setItem("device_id", deviceId);
+        }
+        return deviceId;
+      }
+
+      const DEVICE_ID = getDeviceId();
+
+      function getHeaders(extraHeaders = {}) {
+        return {
+          "X-Device-ID": DEVICE_ID,
+          ...extraHeaders,
+        };
+      }
+
       // --- Initialization ---
       function init() {
-        fetch("/init")
+        fetch("/init", { headers: getHeaders() })
           .then((r) => r.json())
           .then((data) => {
             document.getElementById("clientIp").textContent = data.ip;
@@ -197,7 +216,7 @@
 
       // --- Polling ---
       function poll() {
-        fetch("/poll")
+        fetch("/poll", { headers: getHeaders() })
           .then((r) => r.json())
           .then((data) => {
             const hostTextArea = document.getElementById("hostText");
@@ -217,7 +236,11 @@
       // --- Text Sync ---
       function sendText() {
         const text = document.getElementById("clientText").value;
-        fetch("/text", { method: "POST", body: text });
+        fetch("/text", {
+          method: "POST",
+          headers: getHeaders(),
+          body: text,
+        });
       }
 
       function clearText() {
@@ -309,6 +332,7 @@
 
         fetch(`/files?name=${encodeURIComponent(filename)}`, {
           method: "DELETE",
+          headers: getHeaders(),
         })
           .then((response) => {
             if (response.ok) {
@@ -361,9 +385,9 @@
 
         fetch("/upload", {
           method: "POST",
-          headers: {
+          headers: getHeaders({
             "X-File-Name": encodeURIComponent(file.name),
-          },
+          }),
           body: file,
         })
           .then((response) => {

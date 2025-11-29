@@ -50,7 +50,12 @@
             ddWebServer = new ToolStripDropDownButton();
             toolStripMenuItem1 = new ToolStripMenuItem();
             toolStripMenuItem2 = new ToolStripMenuItem();
-            label3 = new Label();
+            copToolStripMenuItem = new ToolStripMenuItem();
+            copyLocalLinkToolStripMenuItem = new ToolStripMenuItem();
+            copyCloudflareLinkToolStripMenuItem = new ToolStripMenuItem();
+            openWebToolStripMenuItem = new ToolStripMenuItem();
+            openLocalWebToolStripMenuItem = new ToolStripMenuItem();
+            openCloudflareWebToolStripMenuItem = new ToolStripMenuItem();
             label4 = new Label();
             btnClearYourFiles = new Button();
             btnYourAddFiles = new Button();
@@ -65,8 +70,7 @@
             cbWebDevice = new ComboBox();
             label6 = new Label();
             tbWebServer = new TextBox();
-            openWebToolStripMenuItem = new ToolStripMenuItem();
-            copToolStripMenuItem = new ToolStripMenuItem();
+            label3 = new Label();
             statusStrip1.SuspendLayout();
             SuspendLayout();
             // 
@@ -211,29 +215,58 @@
             ddWebServer.Image = (Image)resources.GetObject("ddWebServer.Image");
             ddWebServer.ImageTransparentColor = Color.Magenta;
             ddWebServer.Name = "ddWebServer";
-            ddWebServer.Size = new Size(132, 20);
-            ddWebServer.Text = "Web Server - Enabled";
+            ddWebServer.Size = new Size(79, 20);
+            ddWebServer.Text = "Web Server";
             // 
             // toolStripMenuItem1
             // 
             toolStripMenuItem1.Name = "toolStripMenuItem1";
-            toolStripMenuItem1.Size = new Size(180, 22);
-            toolStripMenuItem1.Text = "Enable Web Server";
+            toolStripMenuItem1.Size = new Size(160, 22);
+            toolStripMenuItem1.Text = "Start Web Server";
             // 
             // toolStripMenuItem2
             // 
             toolStripMenuItem2.Name = "toolStripMenuItem2";
-            toolStripMenuItem2.Size = new Size(180, 22);
-            toolStripMenuItem2.Text = "Disable Web Server";
+            toolStripMenuItem2.Size = new Size(160, 22);
+            toolStripMenuItem2.Text = "Stop Web Server";
             // 
-            // label3
+            // copToolStripMenuItem
             // 
-            label3.AutoSize = true;
-            label3.Location = new Point(12, 246);
-            label3.Name = "label3";
-            label3.Size = new Size(129, 15);
-            label3.TabIndex = 8;
-            label3.Text = "Connected Device Files";
+            copToolStripMenuItem.DropDownItems.AddRange(new ToolStripItem[] { copyLocalLinkToolStripMenuItem, copyCloudflareLinkToolStripMenuItem });
+            copToolStripMenuItem.Name = "copToolStripMenuItem";
+            copToolStripMenuItem.Size = new Size(160, 22);
+            copToolStripMenuItem.Text = "Copy Web Link";
+            // 
+            // copyLocalLinkToolStripMenuItem
+            // 
+            copyLocalLinkToolStripMenuItem.Name = "copyLocalLinkToolStripMenuItem";
+            copyLocalLinkToolStripMenuItem.Size = new Size(169, 22);
+            copyLocalLinkToolStripMenuItem.Text = "Local Network";
+            // 
+            // copyCloudflareLinkToolStripMenuItem
+            // 
+            copyCloudflareLinkToolStripMenuItem.Name = "copyCloudflareLinkToolStripMenuItem";
+            copyCloudflareLinkToolStripMenuItem.Size = new Size(169, 22);
+            copyCloudflareLinkToolStripMenuItem.Text = "Cloudflare Tunnel";
+            // 
+            // openWebToolStripMenuItem
+            // 
+            openWebToolStripMenuItem.DropDownItems.AddRange(new ToolStripItem[] { openLocalWebToolStripMenuItem, openCloudflareWebToolStripMenuItem });
+            openWebToolStripMenuItem.Name = "openWebToolStripMenuItem";
+            openWebToolStripMenuItem.Size = new Size(160, 22);
+            openWebToolStripMenuItem.Text = "Open Web";
+            // 
+            // openLocalWebToolStripMenuItem
+            // 
+            openLocalWebToolStripMenuItem.Name = "openLocalWebToolStripMenuItem";
+            openLocalWebToolStripMenuItem.Size = new Size(169, 22);
+            openLocalWebToolStripMenuItem.Text = "Local Network";
+            // 
+            // openCloudflareWebToolStripMenuItem
+            // 
+            openCloudflareWebToolStripMenuItem.Name = "openCloudflareWebToolStripMenuItem";
+            openCloudflareWebToolStripMenuItem.Size = new Size(169, 22);
+            openCloudflareWebToolStripMenuItem.Text = "Cloudflare Tunnel";
             // 
             // label4
             // 
@@ -354,32 +387,30 @@
             tbWebServer.Name = "tbWebServer";
             tbWebServer.ReadOnly = true;
             tbWebServer.Size = new Size(252, 183);
-            tbWebServer.TabIndex = 16;
+            tbWebServer.TabIndex = 23;
             // 
-            // openWebToolStripMenuItem
+            // label3
             // 
-            openWebToolStripMenuItem.Name = "openWebToolStripMenuItem";
-            openWebToolStripMenuItem.Size = new Size(180, 22);
-            openWebToolStripMenuItem.Text = "Open Web";
-            // 
-            // copToolStripMenuItem
-            // 
-            copToolStripMenuItem.Name = "copToolStripMenuItem";
-            copToolStripMenuItem.Size = new Size(180, 22);
-            copToolStripMenuItem.Text = "Copy Web Link";
+            label3.AutoSize = true;
+            label3.Location = new Point(12, 246);
+            label3.Name = "label3";
+            label3.Size = new Size(91, 15);
+            label3.TabIndex = 24;
+            label3.Text = "Connected Files";
             // 
             // Form1
             // 
             AutoScaleDimensions = new SizeF(7F, 15F);
             AutoScaleMode = AutoScaleMode.Font;
             ClientSize = new Size(814, 391);
+            Controls.Add(label3);
+            Controls.Add(tbWebServer);
             Controls.Add(pbWebServer);
             Controls.Add(lvWebServer);
             Controls.Add(label5);
             Controls.Add(btnRefreshWS);
             Controls.Add(cbWebDevice);
             Controls.Add(label6);
-            Controls.Add(tbWebServer);
             Controls.Add(pbTransfer);
             Controls.Add(cbConnectedMode);
             Controls.Add(lvYourFiles);
@@ -387,7 +418,6 @@
             Controls.Add(btnYourAddFiles);
             Controls.Add(btnClearYourFiles);
             Controls.Add(label4);
-            Controls.Add(label3);
             Controls.Add(statusStrip1);
             Controls.Add(btnQuickClear);
             Controls.Add(btnRefreshCbDevice);
@@ -416,7 +446,6 @@
         private Button btnQuickClear;
         private StatusStrip statusStrip1;
         private ToolStripStatusLabel tsTextStatus;
-        private Label label3;
         private Label label4;
         private Button btnClearYourFiles;
         private Button btnYourAddFiles;
@@ -425,19 +454,6 @@
         private CheckBox cbConnectedMode;
         private ToolStripStatusLabel tsConnectedMode;
         private ProgressBar pbTransfer;
-        private ToolStripStatusLabel toolStripStatusLabel1;
-        private ToolStripStatusLabel toolStripStatusLabel2;
-        private ToolStripDropDownButton ddFirewall;
-        private ToolStripMenuItem enableFirewallRulesToolStripMenuItem;
-        private ToolStripMenuItem removeFileToolStripMenuItem;
-        private ProgressBar pbWebServer;
-        private ListView lvWebServer;
-        private Label label5;
-        private Button btnRefreshWS;
-        private ComboBox cbWebDevice;
-        private Label label6;
-        private TextBox tbWebServer;
-        private ToolStripStatusLabel toolStripStatusLabel3;
         private ToolStripDropDownButton ddWebServer;
         private ToolStripMenuItem toolStripMenuItem1;
         private ToolStripMenuItem toolStripMenuItem2;
@@ -445,5 +461,23 @@
         private ToolStripStatusLabel toolStripStatusLabel5;
         private ToolStripMenuItem openWebToolStripMenuItem;
         private ToolStripMenuItem copToolStripMenuItem;
+        private ListView lvWebServer;
+        private ProgressBar pbWebServer;
+        private Label label5;
+        private Button btnRefreshWS;
+        private ComboBox cbWebDevice;
+        private Label label6;
+        private ToolStripMenuItem removeFileToolStripMenuItem;
+        private ToolStripMenuItem enableFirewallRulesToolStripMenuItem;
+        private ToolStripDropDownButton ddFirewall;
+        private ToolStripStatusLabel toolStripStatusLabel1;
+        private ToolStripStatusLabel toolStripStatusLabel2;
+        private ToolStripStatusLabel toolStripStatusLabel3;
+        private ToolStripMenuItem openLocalWebToolStripMenuItem;
+        private ToolStripMenuItem openCloudflareWebToolStripMenuItem;
+        private ToolStripMenuItem copyLocalLinkToolStripMenuItem;
+        private ToolStripMenuItem copyCloudflareLinkToolStripMenuItem;
+        private TextBox tbWebServer;
+        private Label label3;
     }
 }

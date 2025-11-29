@@ -69,9 +69,9 @@ The application uses:
 
 The built-in Web Server allows devices without the app (like iPhones, Androids) to connect via a browser.
 
-1.  **Enable Web Server**: Click the "Web Server" dropdown and select **Enable Web Server**.
-2.  **Connect**: The dropdown will show a URL (e.g., `http://192.168.1.5:45680`). Open this on your phone.
-3.  **Features**:
+1. **Enable Web Server**: Click the "Web Server" dropdown and select **Enable Web Server**.
+2. **Connect**: The dropdown will show a URL (e.g., `http://192.168.1.5:45680`). Open this on your phone.
+3. **Features**:
     - **Text Sync**: Type on phone to sync with PC, and vice-versa.
     - **File Download**: Download files shared by the PC.
     - **File Upload**: Upload files from your phone to the PC (drag & drop supported).
@@ -145,6 +145,7 @@ Three build options are available to suit different deployment needs:
 - **Best for**: Easy distribution - just copy one EXE file
 
 ### 3. Self-Contained Loose Files (~60-70MB)
+
 - **Includes .NET 8.0 runtime** as separate DLL files
 - No prerequisites needed on target machine
 - Folder with multiple files
@@ -160,12 +161,14 @@ The application automatically checks for .NET 8.0 runtime on startup and shows a
 ## Troubleshooting
 
 **No devices found:**
+
 - Ensure both devices are on the same network
 - Check firewall settings (use `setup-firewall.bat`)
 - Try running the app as Administrator
 - Enable debug console (see below) to check network discovery
 
 **Connection failed:**
+
 - The target device may have firewall restrictions
 - Verify the target device is still running the application
 - Try refreshing and reconnecting

@@ -49,10 +49,10 @@ Similar to Cloudflare Tunnel.
 ### Option C: Port Forwarding
 **Warning**: This exposes your PC directly to the internet. Not recommended unless you know what you are doing.
 
-1.  Log in to your router settings.
-2.  Forward TCP port `45680` to your PC's local IP address.
-3.  Find your Public IP (search "what is my ip" on Google).
-4.  Connect using `http://YOUR_PUBLIC_IP:45680`.
+1. Log in to your router settings.
+2. Forward TCP port `45680` to your PC's local IP address.
+3. Find your Public IP (search "what is my ip" on Google).
+4. Connect using `http://YOUR_PUBLIC_IP:45680`.
 
 ### Option D: Custom Domain (Professional)
 If you own a domain (e.g., `example.com`) and want a professional link like `https://app.example.com`:

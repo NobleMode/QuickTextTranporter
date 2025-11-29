@@ -33,12 +33,14 @@ namespace QuickTextTranporter
         public bool IsRunning => _isRunning;
         public int ClientCount => _clients.Count;
         public IEnumerable<string> ActiveClients => _clients.Keys;
+        public IEnumerable<WebClientState> Clients => _clients.Values;
 
         public WebClientState? GetClientState(string ip)
         {
             _clients.TryGetValue(ip, out var state);
             return state;
         }
+
 
         public void Start()
         {
@@ -127,6 +129,7 @@ namespace QuickTextTranporter
             var response = context.Response;
 
             // Determine client IP, handling proxies (Ngrok, Cloudflare)
+            // Determine client IP, handling proxies (Ngrok, Cloudflare)
             string clientIp = request.RemoteEndPoint.Address.ToString();
 
             if (request.Headers["X-Forwarded-For"] != null)
@@ -147,14 +150,29 @@ namespace QuickTextTranporter
                 clientIp = request.Headers["CF-Connecting-IP"] ?? clientIp;
             }
 
-            // Update or create client state
-            if (!_clients.ContainsKey(clientIp))
+            // Determine unique client identifier (Device ID or IP)
+            string clientId = clientIp;
+            string deviceId = "";
+            if (request.Headers["X-Device-ID"] != null)
             {
-                _clients.TryAdd(clientIp, new WebClientState { IpAddress = clientIp });
-                ClientConnected?.Invoke(this, clientIp);
+                deviceId = request.Headers["X-Device-ID"] ?? "";
+                if (!string.IsNullOrEmpty(deviceId))
+                {
+                    clientId = deviceId;
+                }
             }
 
-            var client = _clients[clientIp];
+            // Update or create client state
+            if (!_clients.ContainsKey(clientId))
+            {
+                _clients.TryAdd(clientId, new WebClientState { IpAddress = clientIp, DeviceId = deviceId });
+                ClientConnected?.Invoke(this, clientId);
+            }
+
+            var client = _clients[clientId];
+            // Ensure IP is up to date (in case device roaming)
+            client.IpAddress = clientIp;
+            if (!string.IsNullOrEmpty(deviceId)) client.DeviceId = deviceId;
             client.LastSeen = DateTime.Now;
 
             try
@@ -416,6 +434,7 @@ namespace QuickTextTranporter
     public class WebClientState
     {
         public string IpAddress { get; set; } = "";
+        public string DeviceId { get; set; } = "";
         public string Text { get; set; } = "";
         public DateTime LastSeen { get; set; }
         public List<System.IO.FileInfo> UploadedFiles { get; set; } = new();

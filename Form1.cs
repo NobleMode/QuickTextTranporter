@@ -124,8 +124,10 @@ namespace QuickTextTranporter
             // Web Server events
             toolStripMenuItem1.Click += (s, e) => ToggleWebServer(true);
             toolStripMenuItem2.Click += (s, e) => ToggleWebServer(false);
-            openWebToolStripMenuItem.Click += OpenWebToolStripMenuItem_Click;
-            copToolStripMenuItem.Click += CopToolStripMenuItem_Click;
+            openLocalWebToolStripMenuItem.Click += OpenLocalWebToolStripMenuItem_Click;
+            openCloudflareWebToolStripMenuItem.Click += OpenCloudflareWebToolStripMenuItem_Click;
+            copyLocalLinkToolStripMenuItem.Click += CopyLocalLinkToolStripMenuItem_Click;
+            copyCloudflareLinkToolStripMenuItem.Click += CopyCloudflareLinkToolStripMenuItem_Click;
             btnRefreshWS.Click += BtnRefreshWS_Click;
             cbWebDevice.SelectedIndexChanged += CbWebDevice_SelectedIndexChanged;
 
@@ -1052,6 +1054,13 @@ namespace QuickTextTranporter
                     toolStripMenuItem1.Enabled = false;
                     toolStripMenuItem2.Enabled = true;
 
+                    // Enable/Disable menu items
+                    openLocalWebToolStripMenuItem.Enabled = true;
+                    copyLocalLinkToolStripMenuItem.Enabled = true;
+                    // Cloudflare items are always enabled to allow starting
+                    openCloudflareWebToolStripMenuItem.Enabled = true;
+                    copyCloudflareLinkToolStripMenuItem.Enabled = true;
+
                     // Force refresh to show empty state if needed
                     RefreshWebClients();
                 }
@@ -1094,6 +1103,12 @@ namespace QuickTextTranporter
                 ddWebServer.ForeColor = Color.Red;
                 toolStripMenuItem1.Enabled = true;
                 toolStripMenuItem2.Enabled = false;
+
+                // Disable menu items
+                openLocalWebToolStripMenuItem.Enabled = false;
+                copyLocalLinkToolStripMenuItem.Enabled = false;
+                openCloudflareWebToolStripMenuItem.Enabled = true; // Keep enabled to allow auto-start
+                copyCloudflareLinkToolStripMenuItem.Enabled = true; // Keep enabled to allow auto-start
                 tsWebServerCount.Text = "Web Server - 0 Devices";
                 cbWebDevice.Items.Clear();
                 cbWebDevice.Items.Add("No devices connected");
@@ -1108,16 +1123,34 @@ namespace QuickTextTranporter
             RefreshWebClients();
         }
 
+        private class ClientDisplayItem
+        {
+            public string Display { get; set; } = "";
+            public string Key { get; set; } = "";
+            public override string ToString() => Display;
+        }
+
         private void RefreshWebClients()
         {
             if (_webServer == null || !_webServer.IsRunning) return;
 
-            var currentSelection = cbWebDevice.SelectedItem?.ToString();
+            var currentKey = (cbWebDevice.SelectedItem as ClientDisplayItem)?.Key;
             cbWebDevice.Items.Clear();
 
-            foreach (var client in _webServer.ActiveClients)
+            foreach (var client in _webServer.Clients)
             {
-                cbWebDevice.Items.Add(client);
+                // Use DeviceId as key if available, otherwise IP
+                // Note: The dictionary key in WebServer is already the correct identifier
+                // But we iterate values here, so we reconstruct the key logic or just rely on what we know
+                // Ideally WebServer should expose the Key in WebClientState or we iterate the Dictionary.
+                // Since we added 'Clients' which is Values, let's assume:
+                string key = !string.IsNullOrEmpty(client.DeviceId) ? client.DeviceId : client.IpAddress;
+
+                string display = !string.IsNullOrEmpty(client.DeviceId)
+                    ? $"{client.IpAddress} ({client.DeviceId.Substring(0, 8)})"
+                    : client.IpAddress;
+
+                cbWebDevice.Items.Add(new ClientDisplayItem { Display = display, Key = key });
             }
 
             if (cbWebDevice.Items.Count == 0)
@@ -1125,13 +1158,26 @@ namespace QuickTextTranporter
                 cbWebDevice.Items.Add("No devices connected");
                 cbWebDevice.SelectedIndex = 0;
             }
-            else if (currentSelection != null && cbWebDevice.Items.Contains(currentSelection))
-            {
-                cbWebDevice.SelectedItem = currentSelection;
-            }
             else
             {
-                cbWebDevice.SelectedIndex = 0;
+                bool found = false;
+                if (currentKey != null)
+                {
+                    foreach (ClientDisplayItem item in cbWebDevice.Items)
+                    {
+                        if (item.Key == currentKey)
+                        {
+                            cbWebDevice.SelectedItem = item;
+                            found = true;
+                            break;
+                        }
+                    }
+                }
+
+                if (!found)
+                {
+                    cbWebDevice.SelectedIndex = 0;
+                }
             }
 
             tsWebServerCount.Text = $"Web Server - {_webServer.ClientCount} Devices";
@@ -1143,9 +1189,21 @@ namespace QuickTextTranporter
             tbWebServer.Clear();
             lvWebServer.Items.Clear();
 
-            if (_webServer != null && cbWebDevice.SelectedItem is string ip)
+            if (_webServer == null) return;
+
+            string? key = null;
+            if (cbWebDevice.SelectedItem is ClientDisplayItem item)
             {
-                var client = _webServer.GetClientState(ip);
+                key = item.Key;
+            }
+            else if (cbWebDevice.SelectedItem is string str && str != "No devices connected")
+            {
+                key = str;
+            }
+
+            if (key != null)
+            {
+                var client = _webServer.GetClientState(key);
                 if (client != null)
                 {
                     tbWebServer.Text = client.Text;
@@ -1153,10 +1211,10 @@ namespace QuickTextTranporter
                     // Populate uploaded files
                     foreach (var file in client.UploadedFiles)
                     {
-                        var item = new ListViewItem(file.Name);
-                        item.SubItems.Add(FormatFileSize(file.Length));
-                        item.Tag = file.FullName; // Store full path for potential opening/interaction
-                        lvWebServer.Items.Add(item);
+                        var lvItem = new ListViewItem(file.Name);
+                        lvItem.SubItems.Add(FormatFileSize(file.Length));
+                        lvItem.Tag = file.FullName;
+                        lvWebServer.Items.Add(lvItem);
                     }
                 }
             }
@@ -1209,31 +1267,118 @@ namespace QuickTextTranporter
                 }
             }
         }
-        private void OpenWebToolStripMenuItem_Click(object? sender, EventArgs e)
+        private CloudflareTunnelService? _tunnelService;
+
+        private async Task StartCloudflareTunnelAsync(Action<string> onReady)
         {
-            EnsureWebServerRunning(() =>
+            if (_tunnelService != null && _tunnelService.IsRunning)
             {
-                string ip = GetLocalIpAddress();
-                string url = $"http://{ip}:45680";
-                try
+                onReady(_tunnelService.PublicUrl ?? "");
+                return;
+            }
+
+            EnsureWebServerRunning(() => { });
+
+            if (_webServer == null || !_webServer.IsRunning) return;
+
+            if (_tunnelService == null)
+            {
+                _tunnelService = new CloudflareTunnelService();
+                _tunnelService.TunnelUrlReady += (s, url) =>
+                {
+                    Invoke(() =>
+                    {
+                        var displayUrl = url.Length > 30 ? url.Substring(0, 27) + "..." : url;
+                        ddWebServer.Text = displayUrl;
+                        ddWebServer.ToolTipText = url;
+                        MessageBox.Show($"Tunnel Started!\n\nPublic URL: {url}\n\nThis URL has been copied to your clipboard.", "Go Online Success", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                        Clipboard.SetText(url);
+                        onReady(url);
+                    });
+                };
+                _tunnelService.TunnelError += (s, error) =>
+                {
+                    Invoke(() =>
+                    {
+                        MessageBox.Show(error, "Tunnel Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                    });
+                };
+            }
+
+            if (!_tunnelService.IsCloudflaredPresent)
+            {
+                var result = MessageBox.Show("Cloudflare Tunnel (cloudflared.exe) is missing. Download it now?", "Download Required", MessageBoxButtons.YesNo, MessageBoxIcon.Question);
+                if (result == DialogResult.Yes)
+                {
+                    ddWebServer.Text = "Downloading Cloudflare...";
+                    // goOnlineToolStripMenuItem.Enabled = false; // Removed
+
+                    var progress = new Progress<int>(percent =>
+                    {
+                        ddWebServer.Text = $"Downloading: {percent}%";
+                    });
+
+                    try
+                    {
+                        await _tunnelService.DownloadCloudflaredAsync(progress);
+                        ddWebServer.Text = "Download Complete";
+                    }
+                    catch (Exception ex)
+                    {
+                        MessageBox.Show($"Download failed: {ex.Message}", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                        ddWebServer.Text = "Download Failed";
+                        return;
+                    }
+                }
+                else
+                {
+                    return;
+                }
+            }
+
+            _tunnelService.Start(45680);
+            ddWebServer.Text = "Starting Tunnel...";
+        }
+
+        private void OpenLocalWebToolStripMenuItem_Click(object? sender, EventArgs e)
+        {
+            if (_webServer != null && _webServer.IsRunning)
+            {
+                string url = $"http://{GetLocalIpAddress()}:45680";
+                Process.Start(new ProcessStartInfo(url) { UseShellExecute = true });
+            }
+        }
+
+        private async void OpenCloudflareWebToolStripMenuItem_Click(object? sender, EventArgs e)
+        {
+            await StartCloudflareTunnelAsync((url) =>
+            {
+                if (!string.IsNullOrEmpty(url))
                 {
                     Process.Start(new ProcessStartInfo(url) { UseShellExecute = true });
-                }
-                catch (Exception ex)
-                {
-                    MessageBox.Show($"Failed to open browser: {ex.Message}", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
                 }
             });
         }
 
-        private void CopToolStripMenuItem_Click(object? sender, EventArgs e)
+        private void CopyLocalLinkToolStripMenuItem_Click(object? sender, EventArgs e)
         {
-            EnsureWebServerRunning(() =>
+            if (_webServer != null && _webServer.IsRunning)
             {
-                string ip = GetLocalIpAddress();
-                string url = $"http://{ip}:45680";
+                string url = $"http://{GetLocalIpAddress()}:45680";
                 Clipboard.SetText(url);
-                MessageBox.Show("Web Server link copied to clipboard!", "Success", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                MessageBox.Show("Local link copied to clipboard!", "Copied", MessageBoxButtons.OK, MessageBoxIcon.Information);
+            }
+        }
+
+        private async void CopyCloudflareLinkToolStripMenuItem_Click(object? sender, EventArgs e)
+        {
+            await StartCloudflareTunnelAsync((url) =>
+            {
+                if (!string.IsNullOrEmpty(url))
+                {
+                    Clipboard.SetText(url);
+                    MessageBox.Show("Cloudflare link copied to clipboard!", "Copied", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                }
             });
         }
 
