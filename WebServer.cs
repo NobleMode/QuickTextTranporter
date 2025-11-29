@@ -125,7 +125,27 @@ namespace QuickTextTranporter
 
             var request = context.Request;
             var response = context.Response;
-            var clientIp = request.RemoteEndPoint.Address.ToString();
+
+            // Determine client IP, handling proxies (Ngrok, Cloudflare)
+            string clientIp = request.RemoteEndPoint.Address.ToString();
+
+            if (request.Headers["X-Forwarded-For"] != null)
+            {
+                // X-Forwarded-For can be a comma-separated list of IPs
+                var forwardedFor = request.Headers["X-Forwarded-For"];
+                if (!string.IsNullOrEmpty(forwardedFor))
+                {
+                    clientIp = forwardedFor.Split(',')[0].Trim();
+                }
+            }
+            else if (request.Headers["X-Real-IP"] != null)
+            {
+                clientIp = request.Headers["X-Real-IP"] ?? clientIp;
+            }
+            else if (request.Headers["CF-Connecting-IP"] != null) // Cloudflare specific
+            {
+                clientIp = request.Headers["CF-Connecting-IP"] ?? clientIp;
+            }
 
             // Update or create client state
             if (!_clients.ContainsKey(clientIp))

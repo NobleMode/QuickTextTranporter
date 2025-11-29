@@ -53,3 +53,21 @@ Similar to Cloudflare Tunnel.
 2.  Forward TCP port `45680` to your PC's local IP address.
 3.  Find your Public IP (search "what is my ip" on Google).
 4.  Connect using `http://YOUR_PUBLIC_IP:45680`.
+
+### Option D: Custom Domain (Professional)
+If you own a domain (e.g., `example.com`) and want a professional link like `https://app.example.com`:
+
+1.  **Prerequisites**:
+    - You must own a domain name.
+    - Add your domain to a free **Cloudflare** account.
+
+2.  **Setup**:
+    - Install `cloudflared` (see Option A).
+    - Login: `cloudflared tunnel login`
+    - Create a tunnel: `cloudflared tunnel create quicktext`
+    - Link your domain: `cloudflared tunnel route dns quicktext app.example.com`
+    - Run it: `cloudflared tunnel run --url http://localhost:45680 quicktext`
+
+3.  **Result**:
+    - You can now access your app at `https://app.example.com` from anywhere.
+    - It uses HTTPS automatically.
